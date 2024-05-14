@@ -88,8 +88,27 @@ async def get_birthdays(days, db: AsyncSession):
     return contacts.scalars().all()
 
 
+async def search(first_name, last_name, email, skip, limit, db):
+    query = select(Contact)
+    if first_name:
+        query = query.filter(Contact.first_name.ilike(f"%{first_name}%"))
+    if last_name:
+        query = query.filter(Contact.last_name.ilike(f"%{last_name}%"))   
+    if email:
+        query = query.filter(Contact.email.ilike(f"%{email}%"))   
+    
+    result_query = query.offset(skip).limit(limit)
+    
+    try:
+        contacts = await db.execute(result_query)
+        return contacts.scalars().all()
+    except Exception as e:
+        # Обработка исключения, запись ошибки в журнал и возврат соответствующего ответа
+        print(f"Ошибка при выполнении запроса к базе данных: {e}")
+        return []
 
 
 
     
-
+  
+    

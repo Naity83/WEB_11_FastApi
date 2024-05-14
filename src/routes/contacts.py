@@ -51,8 +51,20 @@ async def create_contact(contact_data: ContactCreate, db: AsyncSession = Depends
 async def get_birthdays(days: int = Query(7, ge=7), db: AsyncSession = Depends(get_db)):
     contacts = await repository_contacts.get_birthdays(days, db)
     return contacts
-    
 
+
+@router.get("/search", response_model=list[ContactInDB])
+async def serch(
+    first_name: str = None,
+    last_name: str = None,
+    email: str = None,
+    skip: int = 0,
+    limit: int = Query(default=10, le=100, ge=10),
+    db: AsyncSession = Depends(get_db),
+):
+    contacts = await repository_contacts.search(first_name, last_name, email, skip, limit, db)
+    return contacts
+    
 @router.get("/{contact_id}", response_model=ContactInDB)
 async def get_contact(contact_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)):
     contact = await repository_contacts.get_contact(contact_id, db)
@@ -76,27 +88,7 @@ async def delete_contact(contact_id: int = Path(ge=1), db: AsyncSession = Depend
 
 
 
-@router.get("/search/")
-async def search_contacts(
-    query: str = Query(...), session: AsyncSession = Depends(get_db)
- ):
-    contacts = (
-        (
-            await session.execute(
-                select(Contact).filter(
-                    or_(
-                        Contact.first_name.ilike(f"%{query}%"),
-                        Contact.last_name.ilike(f"%{query}%"),
-                        Contact.email.ilike(f"%{query}%"),
-                        Contact.phone_number.ilike(f"%{query}%"),
-                    )
-                )
-            )
-        )
-        .scalars()
-        .all()
-    )
-    return contacts
+
 
 
 
